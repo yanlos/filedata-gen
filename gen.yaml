@@ -1,0 +1,51 @@
+---
+# numpy is used here to download numpy do "pip install numpy"
+# TODO: use existing file, add param to use custom data "data_type" binary or ASQII
+# format name has to contain "generate_file" and then something at the end to differentiate it
+
+# directory:        directory for folder to be created
+# size:             format with number space and size (B is exact # of bytes). ex: 512 B, 1 KB, 22 MB, 42 GB, 1 TB
+# number_files:     number of randomly sized files
+# compression_rate: percent that is not random characters (is white space)
+# type_data:        can generate OS random bytes or ASCII characters: "bytes" or "ascii"
+# folder_depth:     layers of folders in the directory before getting to data files
+
+generate_file1:
+    directory: C:\Users\losy\Desktop\Project\zzoverloadbytes50cr23322422232122323
+    size: 1 GB
+    number_files: 5
+    compression_rate: 50
+    type_data: utf32
+    folder_depth: 5
+
+#generate_file2:
+#    directory: C:\Users\losy\Desktop\Project\123123123122
+#    size: 412 MB
+#    number_files: 30
+#    compression_rate: 65
+#    type_data: asciwei
+#    folder_depth: 2
+
+# TODO: windows, linux, parameter for dir
+#filegenerator:
+#    - generate_file3:
+#        directory: C:\Users\losy\Desktop\Project\test3
+#        size: 1 GB
+#        number_files: 5
+#        compression_rate: 100
+
+
+#generate_database1:
+#    hi: hey
+#    ya: 5
+#
+#generate_database2:
+#    hi: sup
+#    ya: yeet
+
+
+# TODO: I want to create a parameter to optionally keep the random file sizes the same (using the same seed)
+# TODO: in order so when you have more than one generate_file# YAMLs it will be more easily deduplicateable,
+# TODO: maybe even have it as a default?
+
+# TODO: Catch file already exists error by adding a random number to the end of it
