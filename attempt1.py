@@ -3,12 +3,13 @@ import os
 import numpy as np
 import re
 import time
-import random, string
+import string
+import random
 
 #TODO: if file exists, create another version. files that are not read only
 
 
-class MissingParameterException(Exception):
+class InvalidParameterException(Exception):
     pass
 
 
@@ -21,7 +22,7 @@ class HaltAndCatchFire:
     def __init__(self):
         return
 
-    # Shows the YAML file contents
+    # Shows the YAML file contents (optional method)
     def show_yaml(self):
         with open(input_file, 'r') as stream:
             try:
@@ -30,8 +31,7 @@ class HaltAndCatchFire:
                 print(exc)
 
     # Grabs generate_file and generate_database from YAML file, using lists b/c dictionaries overwrites keys
-    # ANY OTHER PARAMETERS IN THE FUTURE ARE NOT TO GO INTO THE LISTS, ONLY 4 ARE ALLOWED EVERYTHING ELSE MAKE A VAR
-    @property
+    # ANY OTHER PARAMETERS IN THE FUTURE HAVE TO BE UPDATED HERE
     def get_params(self):
 
         file_list = []
@@ -51,7 +51,7 @@ class HaltAndCatchFire:
                 # print(database_count)
 
             # We are pulling the parameters from the dict / YAML and adding them to a single list to
-            # avoid log(n^2) time when iterating through
+            # avoid log(n^3) time when iterating through
             if "generate_file" in gen_type:
 
                 d = get_data["directory"]
@@ -63,17 +63,14 @@ class HaltAndCatchFire:
 
                 # if any parameters in the YAML are missing
                 if (d and s and n and c and t and f) is None:
-                    raise MissingParameterException("Missing Parameter(s)")
+                    raise InvalidParameterException("Missing Parameter(s)")
 
                 file_params = [d, s, n, c, t, f]
-                file_list.extend(file_params)   #append the parameters to the list
-                #file_list.append(get_data)     #append the dictionary to the list
-
+                file_list.extend(file_params)
                 file_count += 1
 
         return file_list, file_count, data_list, database_count
 
-    # this is not in the get_params method because it'll slow down
     # TODO look into itertools to iterate multiple lists at once
     # TODO create method to create lists as needed call them x1, x2, x3 etc
     def generate_file(self, file_list, file_count):
@@ -97,8 +94,7 @@ class HaltAndCatchFire:
             folder_depth = self.create_folder_layers(f)
             os.makedirs(d + folder_depth)
 
-            # Push data in a file, this goes to the byte you want and fills it up with white space and then
-            # puts a small message at the end, very fast and compressible if we can use empty space
+            # Gets the total amount of bytes, creates a list of random %'s to split up files, and multiplies them
             bytes_total = self.get_bytes(s)
             random_sizes_list = self.randomize_size(n)
             final_sizes_list = []
@@ -109,11 +105,21 @@ class HaltAndCatchFire:
             print("List of file's sizes in bytes:")
             print(final_sizes_list)
 
+            # This works by writing the deduplicatable (empty space first) and then finding the remaining amount of
+            # space by finding the spot where it stopped writing (rest_of_data) then fills in with the data type
             for file_size in final_sizes_list:
                 # TODO: randomize read,write, diff permissions
-                f = open(d + folder_depth + " " + str(file_size), 'wb')
 
-                # write the deduplicatable data first (empty space)
+                directory_create = d + folder_depth + " " + str(file_size)
+
+                # If the files already exists, then we change the name (add 8 random chars) so they don't get rewritten
+                if os.path.exists(directory_create):
+                    f = open(d + folder_depth + " " + str(file_size) + ''.join(random.sample(string.ascii_letters, 8)), 'wb')
+                else:
+                    f = open(directory_create, 'wb')
+
+                # Push data in a file, this goes to the byte you want and fills it up with white space and then
+                # puts a small message at the end, very fast and compressible if we can use empty space
                 if c is 100:
                     f.seek(int(file_size))
                     f.write(("end of file").encode())
@@ -124,17 +130,19 @@ class HaltAndCatchFire:
                     if t.lower() == "ascii":
                         rand = bytes.maketrans(bytearray(range(256)), bytearray([ord(b'a') + b % 26 for b in range(256)]))
                         f.write(os.urandom(int(rest_of_data)).translate(rand))
-                    if t.lower() == "bytes":
+                    elif t.lower() == "bytes":
                         f.write(os.urandom(int(rest_of_data)))
+                    else:
+                        raise InvalidParameterException("Data Type Not Supported")
 
-                    #TODO: I really want to convert into utf-32 so it is 4 bytes instead of 1 and then write 4x as fast
-                    if t.lower() == "utf32":
-                        rand = ''.join(random.choices(string.ascii_uppercase
-                                                      + string.digits, k=int(rest_of_data)))
-                        rand = rand.encode('utf-32')
-
-                        f.write.translate(rand)
-                        # f.write(os.urandom(int(rest_of_data)).translate(rand))
+                    # TODO: I really want to convert into utf-32 so it's 4 bytes instead of 1 and then write 4x as fast
+                    # if t.lower() == "utf32":
+                    #     # rand = ''.join(random.choices(string.ascii_letters, k=int(rest_of_data / 4)))
+                    #     # rand = rand.encode('utf-32')
+                    #     # rand = ''.join(random.choices(string.ascii_letters).encode("utf-32") * int(rest_of_data))
+                    #     rand = [r.encode("utf-32") for r in ascii_letters]
+                    #     f.write((os.urandom(int(rest_of_data))) for r in bytearray(rand).translate(r))
+                    #     # f.write(os.urandom(int(rest_of_data)).translate(rand))
 
                 f.close()
 
@@ -147,7 +155,6 @@ class HaltAndCatchFire:
             # ex: splits "10MB" or "10 MB" into ->  "10""MB"
             num = int(split.group(1))
             gigtype = split.group(2)
-
         elif "." in size:
             raise InvalidSizeException("Decimals Not Supported. Please Use '512 MB' not '.5 GB'. Use B for exact bytes")
         else:
@@ -168,14 +175,11 @@ class HaltAndCatchFire:
             raise InvalidSizeException("Bad Formatting, Please Make Sure You Are Using: B,K,M,G,T,KB,MB,GB,or TB")
         return bytes_total
 
-
-
     def create_folder_layers(self, f):
         folder_string = ""
         for i in range(f):
             folder_string += "/" + str(i)
         return folder_string + "/"
-
 
     # Returns a list of randomly generated floats to use as the size
     # TODO: optionally keep random file sizes the same using the same seed -> if(param): np.random.seed(1234)
@@ -191,14 +195,11 @@ class HaltAndCatchFire:
 
 
 start_time = time.time()
-
-#test.show_yaml()
+# test.show_yaml()
 input_file = "gen.yaml"
-# this is going to be the number of parameters you are feeding each 'generate_file'
-
 
 test = HaltAndCatchFire()
-file_list, file_count, data_list, database_count = test.get_params
+file_list, file_count, data_list, database_count = test.get_params()
 test.generate_file(file_list, file_count)
 test.generate_database(data_list, database_count)
 
