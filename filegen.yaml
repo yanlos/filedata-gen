@@ -1,0 +1,55 @@
+---
+# format name has to contain "generate_file" and then something at the ends to differentiate it
+# settings parameters:
+# dedup_same_size:     "true" or "false"
+#                      keep the random file sizes the same (using the same seed) so when you have more than one
+#                      directories it will be easier to compare the deduplication. example: A and B have 5 files each,
+#                      if true those 5 random files will be the same size, if false they will be different sizes
+
+# create_database:     "false" or "MSExchange"
+#                      false creates a normal file, unless a database is specified
+#                      supports MSExchange as of now and more coming
+
+settings:
+    dedup_same_size: false
+    create_database: false
+
+# file generation parameters:
+# directory:        directory for folder to be created
+# size:             format with number space and size (B is exact # of bytes). ex: 512 B, 1 KB, 22 MB, 42 GB, 1 TB
+# number_files:     number of randomly sized files
+# compression_rate: percent that is not random characters (is white space)
+# type_data:        can generate OS random bytes or ASCII characters: "bytes" or "ascii"
+# folder_depth:     layers of folders in the directory before getting to data files
+
+generate_file1:
+    directory: C:\Users\losy\Desktop\Project\test1
+    size: 1 MB
+    number_files: 1
+    compression_rate: 65
+    type_data: ascii
+    folder_depth: 0
+
+generate_file2:
+    directory: C:\Users\losy\Desktop\Project\test2
+    size: 1 B
+    number_files: 5
+    compression_rate: 0
+    type_data: bytes
+    folder_depth: 1
+
+generate_file3:
+    directory: C:\Users\losy\Desktop\Project\test3
+    size: 1 MB
+    number_files: 5
+    compression_rate: 100
+    type_data: bytes
+    folder_depth: 5
+
+#generate_fileX:
+#    directory:
+#    size:
+#    number_files:
+#    compression_rate:
+#    type_data:
+#    folder_depth:
